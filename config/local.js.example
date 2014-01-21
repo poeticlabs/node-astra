@@ -1,0 +1,51 @@
+// Main Config,
+// * Untracked LOCAL
+
+var pkg = require('../package');
+
+module.exports = {
+
+	// Package Env
+
+	version: pkg.version,
+	port: process.env.PORT || 9999,
+	environment: process.env.NODE_ENV || 'development',
+	libpath: __dirname + '/../lib',
+
+	// Protocols
+
+	cmd_shcut: '!',
+
+	enable_crossover: true,
+	enable_crossover_channel_creation: true,
+
+	irc: {
+		enabled: true,
+		host: "irc.somehost.net",
+		username: "astra1",
+		crossover_prefix: "[IRC] ",
+		message_delimiter: " : "
+	},
+
+	xmpp: {
+		enabled: true,
+		local_alias: "astra",
+		username: "astra",
+		host: "somedomain.org",
+		chat_domain: "@conference.somedomain.org",
+		password: "password",
+		crossover_prefix: "[XMPP] ",
+		message_delimiter: " : "
+	},
+
+	// Model Adapters
+
+	adapters: {
+		mysql: {
+			user: 'astra',
+			database: 'astra_data',
+			password: 'password',
+			//socketPath: '/var/lib/mysql/mysql.sock'
+		}
+	}
+};

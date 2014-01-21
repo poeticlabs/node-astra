@@ -1,0 +1,9 @@
+{
+	"name"       : "astra",
+	"script"     : "./app.js",
+	"error_file" : "./logs/astra.error.log",
+	"out_file"   : "./logs/astra.out.log",
+	"pid_file"   : "./astra.pid",
+	"exec_mode"  : "fork_mode",
+	"port"       : 9999
+}
