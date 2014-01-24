@@ -24,8 +24,9 @@ module.exports = {
 			var args = data.message.split(/\s+/);
 			args = args.slice(1)
 			// WARNING: Output CUTOFF
+			// You cannot reliably `return` data past this point due to async() !!
 			// Any OBJECT data{} responses past this point need to be sails.controllers.message.send() directly!!
-			// return will not get your message back to the chat unless it's a STRING
+			// You've been warned.
 			return sails.controllers.command.mods[data.command] ( data, args );
 		} else {
 			return "Sorry, " + data.author + ", we did not find a command called: " + data.command;

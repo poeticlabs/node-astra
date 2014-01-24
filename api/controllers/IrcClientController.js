@@ -22,8 +22,8 @@ module.exports = {
    * Action blueprints:
    *    `/ircclient/send`
    */
-	send: function ( channel, message ) {
-		sails.config.bootstrap.irc_client.say ( channel, message );
+	send: function ( data ) {
+		sails.config.bootstrap.irc_client.say ( data.target, data.response );
 	},
 
   /**

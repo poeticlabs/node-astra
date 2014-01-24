@@ -58,15 +58,17 @@ module.exports.bootstrap = function (cb) {
 	//////////////////////////////////////////////////
 
 	mods['add_chan'] = require( config.libpath + '/add_chan' );
-	mods['which_chan'] = require( config.libpath + '/which_chan' );
 	mods['echo'] = require( config.libpath + '/echo' );
+	mods['help'] = require( config.libpath + '/help' );
+	mods['ident'] = require( config.libpath + '/ident' );
+	mods['levelup'] = require( config.libpath + '/levelup' );
+	mods['promote'] = require( config.libpath + '/promote' );
+	mods['version'] = require( config.libpath + '/version' );
+	mods['which_chan'] = require( config.libpath + '/which_chan' );
 
 	//////////////////////////////////////////////////
 
 	sails.controllers.command.mods = mods;
-
-	//sails.controllers.ircclient.init(config);
-	//sails.controllers.xmppclient.init(config);
 
 	if ( config.irc.enabled == true ) {
 
@@ -78,7 +80,7 @@ module.exports.bootstrap = function (cb) {
 		});
 
 		if ( irc_bot ) {
-			console.log( "notice".info, " : ".data, "IRC connected.".debug );
+			console.log( "notice".info + ":".data, "IRC connected.".debug );
 		}
 
 		module.exports.bootstrap.irc_obj = irc;
@@ -86,9 +88,13 @@ module.exports.bootstrap = function (cb) {
 
 		// Listen for any messages
 		irc_bot.addListener("message", function(from, to, text, message) {
+			var type = 'groupchat';
+			if ( ! to.match( new RegExp( '#', 'i' ) ) ) {
+				type = 'chat';
+			}
 			if ( from != config.irc.username ) {
-				console.log ( 'IRC:'.verbose, from, "=>", to, " message:", JSON.stringify(text) );
-				sails.controllers.message.process ( 'irc', from, to, text );
+				console.log ( 'IRC:'.verbose, type.info, from, "=>", to, " message:", text );
+				sails.controllers.message.process ( 'irc', type, from, to, text );
 			}
 		});
 
@@ -110,10 +116,10 @@ module.exports.bootstrap = function (cb) {
 		// Once connected, set available presence and join room
 		cl.on('online', function() {
 
-			console.log( "notice".info, " : ".data, "XMPP connected.".debug );
+			console.log( "notice".info + ":".data, "XMPP connected.".debug );
 
 		  // set ourselves as online
-			cl.send( new xmpp.Element('presence', { type: 'open' }).c('show').t('chat') );
+			cl.send( new xmpp.Element('presence').c('status', { code: 110 } ).c('show').t('chat') );
 
 		  // join rooms (and request no chat history)
 			for ( var i = 0 ; i < channels.xmpp.length ; i++ ) {
@@ -133,31 +139,42 @@ module.exports.bootstrap = function (cb) {
 		});
 
 		cl.on('stanza', function(stanza) {
+
 			// always log error stanzas
 			if (stanza.attrs.type == 'error') {
-				console.log('[error] ' + stanza);
+				console.log('error'.error, stanza.toString() );
 				return;
 			}
-			// ignore everything that isn't a room message
-			if ( ! stanza.is('message') || ! stanza.attrs.type == 'groupchat' ) {
-				return;
-			}
+
+			if ( stanza.is('presence') && stanza.attrs.type == 'subscribe' ) {
+
+				console.log( 'buddy_req'.debug, stanza.toString() );
+
+			} //else if ( ! stanza.is('message') || ! stanza.attrs.type == 'groupchat' ) {
+				// ignore everything that isn't a room message
+				//return;
+				//console.log( 'debug'.debug, stanza.toString() );
+			//}
+
 			// ignore messages we sent
 			if ( stanza.attrs.from.match( new RegExp(room_nick, 'i') ) ) {
 				return;
 			} else if ( stanza.attrs.from == jid ) {
 				return;
 			}
+
 			var body = stanza.getChild('body');
+			var message = '';
+
 			// message without body is probably a topic change
-			if ( ! body ) {
+			if ( stanza.attrs.type != 'subscribe' && ! body ) {
 				return;
+			} else if ( body ) {
+				message = body.getText();
 			}
 
-			var message = body.getText();
-			var response = message;
-			console.log ( 'XMPP:'.verbose, stanza.attrs.from, "=>", stanza.attrs.to, "message:", JSON.stringify(message) );
-			sails.controllers.message.process ( 'xmpp', stanza.attrs.from, stanza.attrs.to, message );
+			console.log ( 'XMPP:'.verbose, stanza.attrs.type.info, stanza.attrs.from, "=>", stanza.attrs.to, "message:", JSON.stringify(message) );
+			sails.controllers.message.process ( 'xmpp', stanza.attrs.type, stanza.attrs.from, stanza.attrs.to, message );
 
 		});
 

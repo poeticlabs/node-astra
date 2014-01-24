@@ -23,20 +23,19 @@ module.exports.policies = {
 		route: 'isValidKey',
 	},
 
-
-	isAdmin: function ( data, next ) {
+	isAdmin: function ( data ) {
 		if (data.identified && data.identity) {
 			// User is allowed, proceed to the next policy, 
 			// or if this is the last policy, the controller
 			if ( data.identity.level >= 75 ) {
-				next();
+				return data;
 			} else {
 				return false;
 			}
 		} else {
 			Identity.findOne( {
 				where: {
-					or: [ {user: data.author}, {nick: data.author} ]
+					or: [ {user: data.author}, {xo: data.author}, {nick: data.author} ]
 				}
 			}, function( err, user ) {
 				// Key is valid if here,
@@ -45,8 +44,11 @@ module.exports.policies = {
 					// (default res.forbidden() behavior can be overridden in `config/403.js`)
 					return false;
 				} else {
+					data.identified = true;
+					data.identity = user;
+
 					if ( user.level >= 75 ) {
-						next();
+						return data;
 					} else {
 						return false;
 					}
@@ -55,19 +57,19 @@ module.exports.policies = {
 		}
 	},
 
-	isSuperAdmin: function ( data, next ) {
+	isSuperAdmin: function ( data ) {
 		if (data.identified && data.identity) {
 			// User is allowed, proceed to the next policy, 
 			// or if this is the last policy, the controller
-			if ( data.identity.level >= 75 ) {
-				next();
+			if ( data.identity.level >= 90 ) {
+				return data;
 			} else {
 				return false;
 			}
 		} else {
 			Identity.findOne( {
 				where: {
-					or: [ {user: data.author}, {nick: data.author} ]
+					or: [ {user: data.author}, {xo: data.author}, {nick: data.author} ]
 				}
 			}, function( err, user ) {
 				// Key is valid if here,
@@ -76,8 +78,11 @@ module.exports.policies = {
 					// (default res.forbidden() behavior can be overridden in `config/403.js`)
 					return false;
 				} else {
-					if ( user.level >= 75 ) {
-						next();
+					data.identified = true;
+					data.identity = user;
+
+					if ( user.level >= 90 ) {
+						return data;
 					} else {
 						return false;
 					}
@@ -86,28 +91,29 @@ module.exports.policies = {
 		}
 	},
 
-	isIdentified: function ( data, next ) {
+	isIdentified: function ( data ) {
 		if (data.identified) {
 			// User is allowed, proceed to the next policy, 
 			// or if this is the last policy, the controller
-			next();
+			return null;
 		} else {
 
 			Identity.findOne( {
 				where: {
-					or: [ {user: data.author}, {nick: data.author} ]
+					or: [ {user: data.author}, {xo: data.author}, {nick: data.author} ]
 				}
 			}, function( err, user ) {
-				// Key is valid if here,
 				if ( ! user ) {
 					// User is not ident
 					// (default res.forbidden() behavior can be overridden in `config/403.js`)
+					console.log( 'error'.error, 'no user but no error');
 					return false;
 				} else {
 					// TODO: altho possibly expired
+					console.log( 'ident'.verbose, JSON.stringify(user));
 					data.identified = true;
 					data.identity = user;
-					next();
+					return false;
 				}
 			});
 		}

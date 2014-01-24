@@ -38,6 +38,33 @@ module.exports = {
 		message_delimiter: " : "
 	},
 
+	ranks: [
+		{
+			name: 'Customer',
+			min_level: 0,
+			max_level: 0,
+			allowed_cmds: [ 'ident', 'help', 'version' ],
+		},
+		{
+			name: 'Staff',
+			min_level: 1,
+			max_level: 499,
+			allowed_cmds: [ 'echo', 'which_chan' ],
+		},
+		{
+			name: 'Admin',
+			min_level: 500,
+			max_level: 749,
+			allowed_cmds: [ 'add_chan', 'levelup' ],
+		},
+		{
+			name: 'SuperAdmin',
+			min_level: 750,
+			max_level: 999,
+			allowed_cmds: [ 'promote', 'set' ],
+		}
+	],
+
 	// Model Adapters
 
 	adapters: {

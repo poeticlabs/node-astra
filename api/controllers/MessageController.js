@@ -21,18 +21,21 @@ module.exports = {
 	* Action blueprints:
 	*    `/message/process`
 	*/
-	process: function ( proto, from, to, message ) {
+	process: function ( proto, type, from, to, message ) {
 
-		// containers
+		// everything about this user/message
 		var data = {
 			proto: proto,
+			type: type,
 			message: message,
 			response: '',
 			target: '',
 			author: '',
 			command: '',
 			identified: false,
-			identity: {}
+			identity: {},
+			rank: 0,
+			allowed_cmds: [],
 		};
 
 		// Ignore Self
@@ -40,6 +43,8 @@ module.exports = {
 			next();
 		}
 
+		// Who is this message from really;
+		// And whom is it to?
 		if ( proto == 'irc' ) {
 			data.target = '#' + to.replace('#', '');
 			data.author = from;
@@ -47,102 +52,144 @@ module.exports = {
 			if ( from == 'api' ) {
 				data.target = to.replace('#','') + sails.config.xmpp.chat_domain;
 				data.author = from;
+			} else if ( type == 'subscribe' ) {
+				data.author = from.replace( new RegExp('@.+', 'i'), '');
 			} else {
 				//target = from.replace('#','') + sails.config.xmpp.chat_domain;
 				data.target = from.replace( new RegExp('/.+$', 'i'), '');
 				data.author = from.replace( new RegExp('^.+/', 'i'), '');
 			}
+		} else if ( proto == 'all' ) {
+			data.author = 'api';
 		}
 
-		//sails.policy.isIdentified( data );
-
-		// decide if this is a command or what
-		var cmd_syntax = new RegExp( '^' + sails.config.cmd_shcut + '([a-z0-9\_\-]+)' );
-		var cmd = message.match( cmd_syntax );
-
-		if ( cmd != null ) {
-			console.log( "Trying to run command: " + cmd[1] );
-			data.command = cmd[1];
-
-			// do something with that
-			data.response = sails.controllers.command.exec ( data );
-		}
-
-		// API is calling for the data to be returned
-		// rather than sent to a channel
-		if ( data.author == 'api' ) {
-			if ( data.target == 'return' ) {
-				return data.response;
+		// If you are who you say you are...
+		Identity.findOne( {
+			where: {
+				or: [ {user: data.author}, {xo: data.author}, {nick: data.author} ]
 			}
-		}
+		}, function ( err, user ) {
 
-		// do normal response if required
-		// TODO: check for groupchat here also
-		if ( data.response != "" ) {
+			if ( user ) {
+				data.identified = true;
+				data.identity = user;
+			}
 
-			if ( data.proto == 'all' ) {
-				// Only API calls get here
-				data.target = '#' + to;
-				data.proto = 'irc';
-				this.send( data );
-
-				// XMPP portion
-				data.proto = 'xmpp';
-				if ( data.author == 'api' ) {
-					data.target = to.replace('#','') + sails.config.xmpp.chat_domain;
-				} else {
-					data.target = to + sails.config.xmpp.chat_domain;
+			for ( var i = 0; i < sails.config.ranks.length; i++ ) {
+				var rank = sails.config.ranks[i];
+				if ( data.identity.level <= rank.max_level && data.identity.level >= rank.min_level ) {
+					data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
+					data.rank = i;
+					data.rankname = rank.name;
+				} else if ( data.identity.level > rank.max_level ) {
+					data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
+					data.rank = i;
+					data.rankname = rank.name;
 				}
-				this.send( data );
+			}
+
+			// Process buddy junk right away and bail
+			// Buddies must be Ident and >= rank 1 (Staff)
+			if ( data.type === 'subscribe' ) {
+				sails.controllers.xmppclient.subscribe( data );
 				return;
 			}
 
-			// Private Message
-			//if ( to.match( new RegExp( sails.config.xmpp.local_alias + "|" + sails.config.irc.username, 'i') ) ) {
-			//	target = from;
-			//}
+			// decide if this is a command or what
+			var cmd_syntax = new RegExp( '^' + sails.config.cmd_shcut + '([a-z0-9\_\-]+)' );
+			var cmd = message.match( cmd_syntax );
 
-			this.send( data );
-		}
+			if ( cmd != null ) {
+				console.log( "Trying to run command: " + cmd[1] );
+				console.log( data.author );
+				data.command = cmd[1];
+				if ( ( data.identified == true && data.allowed_cmds.indexOf( data.command ) > -1 )
+					|| data.author == 'api'
+					|| data.command == 'ident' ) {
+					// do something with that
+					data.response = sails.controllers.command.exec ( data );
+				} else {
+					data.response = "Sorry, " + data.author + ", you are not allowed to do that.";
+				}
+			}
 
-		// Crossover
-		if ( sails.config.enable_crossover == true && cmd == null ) {
-			// response should only == message if
-			// 1. this is not a command
-			// 2. crossover is enabled
-			// 3. the protocol is flipped
-			// 4. this is not a PM/IM /whisper (irc:PRIVMSG->nick, xmpp:type=chat)
+			// API is calling for the data to be returned
+			// rather than sent to a channel
+			if ( data.author == 'api' ) {
+				if ( data.target == 'return' ) {
+					return data.response;
+				}
+			}
 
-			data.response = message;
+			// do normal response if required
+			// TODO: check for groupchat here also
+			if ( data.response != "" ) {
 
-			if ( data.proto == 'irc' ) {
-				data.proto = 'xmpp';
-				data.target = to.replace('#', '');
-				data.target = data.target + sails.config.xmpp.chat_domain;
+				if ( data.proto == 'all' ) {
+					// Only API calls get here
+					data.target = '#' + to;
+					data.proto = 'irc';
+					sails.controllers.message.send( data );
 
-				data.response = sails.config.irc.crossover_prefix + from + sails.config.irc.message_delimiter + message
+					// XMPP portion
+					data.proto = 'xmpp';
+					if ( data.author == 'api' ) {
+						data.target = to.replace('#','') + sails.config.xmpp.chat_domain;
+					} else {
+						data.target = to + sails.config.xmpp.chat_domain;
+					}
+					sails.controllers.message.send( data );
+					return;
+				}
 
-				console.log( "XO:".verbose, data.proto.warn, to, "=>", data.target );
+				// Private Message
+				//if ( to.match( new RegExp( sails.config.xmpp.local_alias + "|" + sails.config.irc.username, 'i') ) ) {
+				if ( data.type === 'chat' ) {
+					data.target = data.author;
+				}
 
-			} else if ( data.proto == 'xmpp' ) {
-				data.proto = 'irc';
-				data.target = from.replace(sails.config.xmpp.chat_domain, '');
-				data.author = data.target.replace( new RegExp('^.+/', 'i'), '' );
-				data.target = data.target.replace( new RegExp('/.+$', 'i'), '' );
-				data.target = '#' + data.target;
+				sails.controllers.message.send( data );
+			}
 
-				data.response = sails.config.xmpp.crossover_prefix + from + sails.config.xmpp.message_delimiter + message
+			// Crossover
+			if ( sails.config.enable_crossover == true && cmd == null && type != 'chat' ) {
+				// response should only == message if
+				// 1. this is not a command
+				// 2. crossover is enabled
+				// 3. the protocol is flipped
+				// 4. this is not a PM/IM /whisper (irc:PRIVMSG->nick, xmpp:type=chat)
 
-				console.log( "XO:".verbose, data.proto.warn, from, "=>", data.target );
+				data.response = message;
+
+				if ( data.proto == 'irc' ) {
+					data.proto = 'xmpp';
+					data.target = to.replace('#', '');
+					data.target = data.target + sails.config.xmpp.chat_domain;
+
+					data.response = sails.config.irc.crossover_prefix + from + sails.config.irc.message_delimiter + message
+
+					console.log( "XO:".verbose, data.proto.warn, to, "=>", data.target );
+
+				} else if ( data.proto == 'xmpp' ) {
+					data.proto = 'irc';
+					data.target = from.replace(sails.config.xmpp.chat_domain, '');
+					data.author = data.target.replace( new RegExp('^.+/', 'i'), '' );
+					data.target = data.target.replace( new RegExp('/.+$', 'i'), '' );
+					data.target = '#' + data.target;
+
+					data.response = sails.config.xmpp.crossover_prefix + from + sails.config.xmpp.message_delimiter + message
+
+					console.log( "XO:".verbose, data.proto.warn, from, "=>", data.target );
+
+				}
+
+				if ( data.target ) {
+					sails.controllers.message.send( data );
+				}
 
 			}
 
-			// check for groupchat here also
-			if ( data.target ) {
-				this.send( data );
-			}
-
-		}
+		}); // Identity.findOne().callback
 
 	},
 
@@ -154,14 +201,11 @@ module.exports = {
 
 		if ( data.proto == 'irc' ) {
 			// IRC
-			sails.controllers.ircclient.send ( data.target, data.response );
+			sails.controllers.ircclient.send ( data );
 
 		} else if ( data.proto == 'xmpp' ) {
 			// send response XMPP
-			sails.controllers.xmppclient.send ( data.target, data.response );
-			//bot.send(new conn_obj.Element('message', { to: channel, type: 'groupchat' })
-			//	.c('body').t( message )
-			//);
+			sails.controllers.xmppclient.send ( data );
 		}
 
 	},

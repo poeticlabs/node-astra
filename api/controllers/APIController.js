@@ -47,6 +47,7 @@ module.exports	= {
 
 				data.response = sails.controllers.message.process (
 					req.param('proto') || 'all',
+					req.param('type') || 'groupchat',
 					'api',
 					req.param('target') || 'return',
 					message
