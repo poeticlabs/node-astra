@@ -166,7 +166,7 @@ module.exports = {
 					data.target = to.replace('#', '');
 					data.target = data.target + sails.config.xmpp.chat_domain;
 
-					data.response = sails.config.irc.crossover_prefix + from + sails.config.irc.message_delimiter + message
+					data.response = sails.config.irc.crossover_prefix + data.author + sails.config.irc.message_delimiter + message
 
 					console.log( "XO:".verbose, data.proto.warn, to, "=>", data.target );
 
@@ -177,9 +177,9 @@ module.exports = {
 					data.target = data.target.replace( new RegExp('/.+$', 'i'), '' );
 					data.target = '#' + data.target;
 
-					data.response = sails.config.xmpp.crossover_prefix + from + sails.config.xmpp.message_delimiter + message
+					data.response = sails.config.xmpp.crossover_prefix + data.author + sails.config.xmpp.message_delimiter + message
 
-					console.log( "XO:".verbose, data.proto.warn, from, "=>", data.target );
+					console.log( "XO:".verbose, data.proto.warn, data.author, "=>", data.target );
 
 				}
 
