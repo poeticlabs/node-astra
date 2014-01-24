@@ -52,23 +52,27 @@ module.exports.bootstrap = function (cb) {
 
 	module.exports.bootstrap.colors = colors;
 
-	// Get the Modules
+	//////////////////////////////////////////////////
+	//
+	// M * O * D * U * L * E * S
+	//
+	//////////////////////////////////////////////////
+
 	var mods = [];
 
-	//////////////////////////////////////////////////
-
-	mods['add_chan'] = require( config.libpath + '/add_chan' );
-	mods['echo'] = require( config.libpath + '/echo' );
-	mods['help'] = require( config.libpath + '/help' );
-	mods['ident'] = require( config.libpath + '/ident' );
-	mods['levelup'] = require( config.libpath + '/levelup' );
-	mods['promote'] = require( config.libpath + '/promote' );
-	mods['version'] = require( config.libpath + '/version' );
-	mods['which_chan'] = require( config.libpath + '/which_chan' );
-
-	//////////////////////////////////////////////////
+	mods['add_chan']	= require( config.libpath + '/add_chan' );
+	mods['echo']		= require( config.libpath + '/echo' );
+	mods['help']		= require( config.libpath + '/help' );
+	mods['ident']		= require( config.libpath + '/ident' );
+	mods['levelup']		= require( config.libpath + '/levelup' );
+	mods['promote']		= require( config.libpath + '/promote' );
+	mods['set']			= require( config.libpath + '/set' );
+	mods['version']		= require( config.libpath + '/version' );
+	mods['which_chan']	= require( config.libpath + '/which_chan' );
 
 	sails.controllers.command.mods = mods;
+
+	//////////////////////////////////////////////////
 
 	if ( config.irc.enabled == true ) {
 

@@ -15,15 +15,19 @@
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
 
+var c = require('irc-colors');
+
 module.exports = {
     
-  
-  /**
-   * Action blueprints:
-   *    `/ircclient/send`
-   */
+	/**
+	* Action blueprints:
+	*    `/ircclient/send`
+	*/
 	send: function ( data ) {
-		sails.config.bootstrap.irc_client.say ( data.target, data.response );
+		var responses = data.response.split('\n');
+		for ( var i = 0; i < responses.length; i++ ) {
+			sails.config.bootstrap.irc_client.say ( data.target, c[sails.config.irc.color]( responses[i] ) );
+		}
 	},
 
   /**

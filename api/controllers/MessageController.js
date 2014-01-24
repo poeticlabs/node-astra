@@ -28,7 +28,7 @@ module.exports = {
 			proto: proto,
 			type: type,
 			message: message,
-			response: '',
+			response: null,
 			target: '',
 			author: '',
 			command: '',
@@ -101,7 +101,6 @@ module.exports = {
 
 			if ( cmd != null ) {
 				console.log( "Trying to run command: " + cmd[1] );
-				console.log( data.author );
 				data.command = cmd[1];
 				if ( ( data.identified == true && data.allowed_cmds.indexOf( data.command ) > -1 )
 					|| data.author == 'api'
@@ -123,7 +122,7 @@ module.exports = {
 
 			// do normal response if required
 			// TODO: check for groupchat here also
-			if ( data.response != "" ) {
+			if ( data.response != null ) {
 
 				if ( data.proto == 'all' ) {
 					// Only API calls get here
