@@ -71,6 +71,9 @@ module.exports = {
 		}, function ( err, user ) {
 
 			if ( user ) {
+				if ( user.level == null ) {
+					user.level = 0;
+				};
 				data.identified = true;
 				data.identity = user;
 			}
