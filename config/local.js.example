@@ -24,7 +24,8 @@ module.exports = {
 		host: "irc.somehost.net",
 		username: "astra1",
 		crossover_prefix: "[IRC] ",
-		message_delimiter: " : "
+		message_delimiter: " : ",
+		color: "violet"
 	},
 
 	xmpp: {
@@ -35,7 +36,8 @@ module.exports = {
 		chat_domain: "@conference.somedomain.org",
 		password: "password",
 		crossover_prefix: "[XMPP] ",
-		message_delimiter: " : "
+		message_delimiter: " : ",
+		color: "purple"
 	},
 
 	ranks: [

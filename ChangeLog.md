@@ -1,5 +1,13 @@
 # ChangeLog: node-astra
 
+## 2.0.0-alpha Release
+* Bot now identifies with NickServ/OperServ
+* !add_chan now sets access levels / conference affiliation of message author
+* Reworked !add_chan to accept a list of additional users to be Op/Admin
+* Reworked Identity model for better XO awareness when adding channels
+* Wrapped bootstrap in a function for async callback
+* Various other fixes for production readiness
+
 ## 2.0.0-pre-alpha.RC2
 * Added colors to chat protocol output
 * Added !set for dynamic configging
