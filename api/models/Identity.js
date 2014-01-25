@@ -1,8 +1,8 @@
 // Identity.js
 var Identity = {
 	attributes: {
-		user: 'STRING',
-		xo: 'STRING',
+		irc: 'STRING',
+		xmpp: 'STRING',
 		level: 'INTEGER',
 		first: 'STRING',
 		last: 'STRING',

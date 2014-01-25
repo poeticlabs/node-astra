@@ -42,4 +42,6 @@ nbproject
 ########################
 # local config
 ########################
+*.bak
 config/local.js
+config/local-dev.js

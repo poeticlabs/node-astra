@@ -66,7 +66,7 @@ module.exports = {
 		// If you are who you say you are...
 		Identity.findOne( {
 			where: {
-				or: [ {user: data.author}, {xo: data.author}, {nick: data.author} ]
+				or: [ {irc: data.author}, {xmpp: data.author}, {nick: data.author} ]
 			}
 		}, function ( err, user ) {
 
@@ -79,12 +79,12 @@ module.exports = {
 				var rank = sails.config.ranks[i];
 				if ( data.identity.level <= rank.max_level && data.identity.level >= rank.min_level ) {
 					data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
-					data.rank = i;
-					data.rankname = rank.name;
+					data.identity.rank = i;
+					data.identity.rankname = rank.name;
 				} else if ( data.identity.level > rank.max_level ) {
 					data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
-					data.rank = i;
-					data.rankname = rank.name;
+					data.identity.rank = i;
+					data.identity.rankname = rank.name;
 				}
 			}
 

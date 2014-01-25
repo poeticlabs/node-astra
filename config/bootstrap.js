@@ -37,10 +37,10 @@ module.exports.bootstrap = function (cb) {
 	Channel.find().done( function(err, list) {
 		if ( err ) {
 			console.log( 'ERROR: No channels found, '.error, JSON.stringify( err ).error );
-		}
-		if ( list ) {
+		} else if ( list ) {
 			for ( var i = 0; i < list.length; i++ ) {
 				if ( list[i].hasOwnProperty('irc') ) {
+					console.log ( 'found channel ' + list[i].irc );
 					channels.irc.push( list[i].irc );
 				}
 				if ( list[i].hasOwnProperty('xmpp') ) {
@@ -48,6 +48,7 @@ module.exports.bootstrap = function (cb) {
 				}
 			}
 		}
+		main();
 	});
 
 	module.exports.bootstrap.colors = colors;
@@ -64,6 +65,7 @@ module.exports.bootstrap = function (cb) {
 	mods['echo']		= require( config.libpath + '/echo' );
 	mods['help']		= require( config.libpath + '/help' );
 	mods['ident']		= require( config.libpath + '/ident' );
+	mods['join']		= require( config.libpath + '/join' );
 	mods['levelup']		= require( config.libpath + '/levelup' );
 	mods['promote']		= require( config.libpath + '/promote' );
 	mods['set']			= require( config.libpath + '/set' );
@@ -74,13 +76,31 @@ module.exports.bootstrap = function (cb) {
 
 	//////////////////////////////////////////////////
 
+	function main() {
+
 	if ( config.irc.enabled == true ) {
 
 		var irc = require("irc");
 
 		// Create the bot
 		var irc_bot = new irc.Client( config.irc.host, config.irc.username, {
-			channels: channels.irc
+			userName: 'astra',
+			realName: 'Astrabella',
+			port: 6667,
+			debug: false,
+			showErrors: false,
+			autoRejoin: true,
+			autoConnect: true,
+			channels: channels.irc,
+			secure: false,
+			selfSigned: false,
+			certExpired: false,
+			floodProtection: false,
+			floodProtectionDelay: 1000,
+			sasl: false,
+			stripColors: false,
+			channelPrefixes: "&#",
+			messageSplit: 512
 		});
 
 		if ( irc_bot ) {
@@ -89,6 +109,17 @@ module.exports.bootstrap = function (cb) {
 
 		module.exports.bootstrap.irc_obj = irc;
 		module.exports.bootstrap.irc_client = irc_bot;
+
+		irc_bot.addListener("registered", function(message) {
+
+			setTimeout(function () {
+				irc_bot.say( 'NickServ', 'IDENTIFY ' + sails.config.irc.password );
+			}, 1000);
+			setTimeout(function () {
+				irc_bot.send( 'oper', 'root', sails.config.irc.password );
+			}, 1000);
+
+		});
 
 		// Listen for any messages
 		irc_bot.addListener("message", function(from, to, text, message) {
@@ -137,9 +168,6 @@ module.exports.bootstrap = function (cb) {
 
 			// send keepalive data or server will disconnect us after 150s of inactivity
 			cl.connection.socket.setKeepAlive(true, 10000)
-			//setInterval(function() {
-			//	cl.send(' ');
-			//}, 30000);
 		});
 
 		cl.on('stanza', function(stanza) {
@@ -151,14 +179,8 @@ module.exports.bootstrap = function (cb) {
 			}
 
 			if ( stanza.is('presence') && stanza.attrs.type == 'subscribe' ) {
-
 				console.log( 'buddy_req'.debug, stanza.toString() );
-
-			} //else if ( ! stanza.is('message') || ! stanza.attrs.type == 'groupchat' ) {
-				// ignore everything that isn't a room message
-				//return;
-				//console.log( 'debug'.debug, stanza.toString() );
-			//}
+			}
 
 			// ignore messages we sent
 			if ( stanza.attrs.from.match( new RegExp(room_nick, 'i') ) ) {
@@ -185,6 +207,8 @@ module.exports.bootstrap = function (cb) {
 		module.exports.bootstrap.xmpp_obj = xmpp;
 		module.exports.bootstrap.xmpp_client = cl;
 	}
+
+	} // Function main()
 
 	/////////////////////////////////////////////////////////////////////////////
 

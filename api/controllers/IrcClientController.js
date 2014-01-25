@@ -24,9 +24,11 @@ module.exports = {
 	*    `/ircclient/send`
 	*/
 	send: function ( data ) {
-		var responses = data.response.split('\n');
-		for ( var i = 0; i < responses.length; i++ ) {
-			sails.config.bootstrap.irc_client.say ( data.target, c[sails.config.irc.color]( responses[i] ) );
+		if ( data.response != null ) {
+			var responses = data.response.split('\n');
+			for ( var i = 0; i < responses.length; i++ ) {
+				sails.config.bootstrap.irc_client.say ( data.target, c[sails.config.irc.color]( responses[i] ) );
+			}
 		}
 	},
 

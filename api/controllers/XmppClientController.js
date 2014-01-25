@@ -46,7 +46,7 @@ module.exports = {
 	subscribe: function ( data ) {
 		var identee = data.author + '@' + sails.config.xmpp.host;
 
-		if ( data.identified == true && data.rank >= 1 ) {
+		if ( data.identified == true && data.identity.rank >= 1 ) {
 			sails.config.bootstrap.xmpp_client.send( new sails.config.bootstrap.xmpp_obj.Element('presence', { to: identee, type: 'subscribed' })
 				.c('x', { 'xmlns:stream':"http://etherx.jabber.org/streams" })
 			);

@@ -1,21 +1,22 @@
 {
   "name": "astra",
   "private": true,
-  "version": "2.0.0.pre-alpha.RC2",
+  "version": "2.0.0-alpha",
   "description": "An IRC/XMPP crossover-communications robot, and companion.",
 
   "dependencies": {
-    "colors": "~0.6.2",
     "sails": "0.9.8",
     "grunt": "0.4.1",
     "sails-disk": "~0.9.0",
     "sails-mysql": "~0.9.5",
     "ejs": "0.8.4",
     "optimist": "0.3.4",
+    "colors": "~0.6.2",
     "irc": "0.3.6",
     "irc-colors": "~1.0.3",
     "node-xmpp": "0.12.0",
-    "pm2": "~0.7.1"
+    "pm2": "~0.7.1",
+	"ssh2": "~0.2.17"
   },
 
   "scripts": {
