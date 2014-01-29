@@ -33,7 +33,7 @@ module.exports = function isValidKey (req, res, next) {
 			return res.forbidden( data );
 		} else {
 			// TODO: altho possibly expired
-			console.log ( "Found Key:", key.data );
+			console.log ( "Found Key:".verbose, key.name.verbose );
 			req.session.valid_key = true;
 			next();
 		}

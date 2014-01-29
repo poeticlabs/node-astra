@@ -23,11 +23,8 @@ module.exports	= {
 	*/
 	route: function (req, res) {
 
-		console.log ( "API Routing: /".debug + req.param('controller').debug + "/" + req.param('action').debug );
-
-		var data = {
-			version: sails.config.version,
-		};
+		console.log ( "API Routing: /".debug + req.param('controller').debug + "/".debug + req.param('action').debug );
+		var data = {};
 
 		if ( req.param('key') ) {
 
@@ -37,21 +34,47 @@ module.exports	= {
 			// route the controller action here
 			} else if ( req.param('action') != null ) {
 
-				var message = '';
+				data.message = '';
 
 				if ( req.param('controller') == 'message' ) {
-					message = req.param('action') + ": " + req.param('data');
+					data.message = req.param('action') + ": " + req.param('data');
 				} else {
-					message = sails.config.cmd_shcut + req.param('action') + " " + req.param('data');
+					data.message = sails.config.cmd_shcut + req.param('action') + " " + req.param('data');
 				}
 
-				data.response = sails.controllers.message.process (
-					req.param('proto') || 'all',
-					req.param('type') || 'groupchat',
-					'api',
-					req.param('target') || 'return',
-					message
-				);
+				console.log ( "Data: ".yellow, data.message.yellow );
+
+				data.proto = req.param('proto') || 'all';
+				data.type = req.param('type') || 'groupchat';
+				data.target = req.param('target').replace( /#/,'') || 'return';
+				data.author = 'api';
+				data.color = null;
+
+				if ( data.message.match ( /RECOVERY|Bravo/ ) ) {
+					data.irc_color = 'green';
+					data.xmpp_color = 'green';
+				} else if ( data.message.match ( /CRIT|Tango/ ) ) {
+					data.irc_color = 'red';
+					data.xmpp_color = 'red';
+				} else if ( data.message.match ( /WARN/ ) ) {
+					data.irc_color = 'yellow';
+					data.xmpp_color = 'orange';
+				}
+
+				if ( data.message.match ( /ACKNO/ ) ) {
+					data.irc_color = 'cyan';
+					data.xmpp_color = 'lightblue';
+				}
+
+				data.response = sails.controllers.message.process ( {
+					proto: data.proto,
+					type: data.type,
+					target: data.target,
+					author: data.author,
+					message: data.message,
+					irc_color: data.irc_color,
+					xmpp_color: data.xmpp_color,
+				});
 
 				if ( ! data.response && ! data.errmsg ) {
 					data.response = "OK";
