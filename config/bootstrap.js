@@ -42,7 +42,6 @@ module.exports.bootstrap = function (cb) {
 		} else if ( list ) {
 			for ( var i = 0; i < list.length; i++ ) {
 				if ( list[i].hasOwnProperty('irc') ) {
-					console.log ( 'found channel ' + list[i].irc );
 					channels.irc.push( list[i].irc );
 				}
 				if ( list[i].hasOwnProperty('xmpp') ) {
@@ -65,14 +64,18 @@ module.exports.bootstrap = function (cb) {
 
 	mods['add_chan']	= require( config.cmdpath + '/add_chan' );
 	mods['aop']			= require( config.cmdpath + '/aop' );
+	mods['cq']			= require( config.cmdpath + '/cq' );
 	mods['echo']		= require( config.cmdpath + '/echo' );
+	mods['eq']			= require( config.cmdpath + '/eq' );
 	mods['exit']		= require( config.cmdpath + '/exit' );
 	mods['help']		= require( config.cmdpath + '/help' );
 	mods['ident']		= require( config.cmdpath + '/ident' );
 	mods['join']		= require( config.cmdpath + '/join' );
 	mods['joke']		= require( config.cmdpath + '/joke' );
 	mods['levelup']		= require( config.cmdpath + '/levelup' );
+	mods['mq']			= require( config.cmdpath + '/mq' );
 	mods['promote']		= require( config.cmdpath + '/promote' );
+	mods['reload']		= require( config.cmdpath + '/reload' );
 	mods['set']			= require( config.cmdpath + '/set' );
 	mods['version']		= require( config.cmdpath + '/version' );
 	mods['which_chan']	= require( config.cmdpath + '/which_chan' );
@@ -88,7 +91,6 @@ module.exports.bootstrap = function (cb) {
 			var irc = require("irc");
 			var data = {};
 			data.proto = 'irc';
-			data.type = 'groupchat';
 
 			// Create the bot
 			var irc_bot = new irc.Client( config.irc.host, config.irc.username, {
@@ -138,26 +140,25 @@ module.exports.bootstrap = function (cb) {
 
 			// Listen for joins
 			irc_bot.addListener("join", function( channel, nick, message ) {
+				data.type = 'presence';
 				data.target = channel;
 				data.author = channel;
 				data.message = nick + " enters the channel.";
-				data.irc_color = 'grey';
-				data.xmpp_color = 'greg';
 				sails.controllers.message.process ( data );
 			});
 
 			// Listen for parts
 			irc_bot.addListener("part", function( channel, nick, reason, message ) {
+				data.type = 'presence';
 				data.target = channel;
 				data.author = channel;
 				data.message = nick + " leaves the channel.";
-				data.irc_color = 'grey';
-				data.xmpp_color = 'greg';
 				sails.controllers.message.process ( data );
 			});
 
 			// Listen for GroupChats
 			irc_bot.addListener("message#", function(from, to, text, message) {
+				data.type = 'groupchat';
 				data.target = '#' + to.replace('#', '');
 				data.author = from;
 				data.message = text;
@@ -235,7 +236,6 @@ module.exports.bootstrap = function (cb) {
 				var data = {};
 
 				data.proto = 'xmpp';
-				data.type = stanza.attrs.type;
 
 				data.target = stanza.attrs.from.replace( new RegExp('/.+$', 'i'), '');
 				data.author = stanza.attrs.from.replace( new RegExp('^.+/', 'i'), '');
@@ -243,40 +243,49 @@ module.exports.bootstrap = function (cb) {
 				var body = stanza.getChild('body');
 
 				if ( stanza.is('presence') ) {
+
 					if ( stanza.attrs.type == 'subscribe' ) {
 						console.log( 'buddy_req'.debug, stanza.toString() );
 						data.author = data.from.replace( new RegExp('@.+', 'i'), '');
 					} else if ( stanza.attrs.type == 'unavailable' ) {
 						data.message = stanza.attrs.from.replace( config.xmpp.chat_domain, '' )
 						.replace( new RegExp( '.+/' ), '' ) + " leaves the channel.";
-						data.irc_color = 'grey';
-						data.xmpp_color = 'greg';
 
 						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( new RegExp( '/.+' ), '' );
-						data.type = 'groupchat';
+						data.type = 'presence';
+
+						console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
+						sails.controllers.message.process ( data );
+
 					} else if ( ! body ) {
 						if ( stanza.children[0].name == 'show' || stanza.children[2].attrs.xmlns == 'vcard-temp:x:update' ) {
+							// Just a status change
 							return;
 						}
 						data.message = stanza.attrs.from.replace( config.xmpp.chat_domain, '' )
 						.replace( new RegExp( '.+/' ), '' ) + " enters the channel.";
-						data.irc_color = 'grey';
-						data.xmpp_color = 'greg';
 
 						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( new RegExp( '/.+' ), '' );
-						data.type = 'groupchat';
+						data.type = 'presence';
+
+						console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
+						sails.controllers.message.process ( data );
 					}
-				}
 
-				// message without body is probably a topic change
-				if ( body ) {
-					data.message = body.getText();
-				} else if ( ! data.message ) {
-					return;
-				}
+				} else {
 
-				console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
-				sails.controllers.message.process ( data );
+					data.type = stanza.attrs.type;
+
+					// message without body is probably a topic change
+					if ( body ) {
+						data.message = body.getText();
+					} else if ( ! data.message ) {
+						return;
+					}
+
+					console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
+					sails.controllers.message.process ( data );
+				}
 
 			});
 
@@ -285,6 +294,23 @@ module.exports.bootstrap = function (cb) {
 		}
 
 	} // Function main()
+
+	// Garbage Collect Sessions
+	(function gc () {
+
+		setTimeout( function() {
+			console.log( 'GC:'.debug, 'session_cleanup'.info );
+			sails.config.session.store.all( function(n, s) {
+				for (var i = 0; i < s.length; i++) {
+					sails.config.session.store.get(s[i], function() {} );
+				}
+			});
+
+			gc();
+
+		}, 60000 );
+
+	})();
 
 	/////////////////////////////////////////////////////////////////////////////
 

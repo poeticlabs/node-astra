@@ -1,5 +1,14 @@
 # ChangeLog: node-astra
 
+## 2.0.0-beta.RC1
+* Added !aop, !cq, !eq, !exit, !joke, !mq, !reload
+* Base API v1 to v2 passthrough
+* Added XO channel-exits and entries
+* Added StrongOps profiling
+* Added manual http session garbage collection
+* Reworked color object instantiation per response
+* Modify Joke model data VARCHAR to TEXT
+
 ## 2.0.0-alpha Release
 * Bot now identifies with NickServ/OperServ
 * !add_chan now sets access levels / conference affiliation of message author

@@ -38,50 +38,6 @@ module.exports = ( function() {
 			}
 		},
 
-		exec_ssh: function( data ) {
-
-			if ( data.cmd != null ) {
-				var Connection = require('ssh2');
-
-				var c = new Connection();
-				c.on('ready', function() {
-					console.log('Connection :: ready');
-					c.exec('uptime', function(err, stream) {
-						if (err) throw err;
-						stream.on('data', function(data, extended) {
-							console.log( (extended === 'stderr' ? 'STDERR: ' : 'STDOUT: ') + data);
-						});
-						stream.on('end', function() {
-							console.log('Stream :: EOF');
-						});
-						stream.on('close', function() {
-							console.log('Stream :: close');
-						});
-						stream.on('exit', function(code, signal) {
-							console.log('Stream :: exit :: code: ' + code + ', signal: ' + signal);
-							c.end();
-						});
-					});
-				});
-
-				c.on('error', function(err) {
-					console.log('Connection :: error :: ' + err);
-				});
-				c.on('end', function() {
-					console.log('Connection :: end');
-				});
-				c.on('close', function(had_error) {
-					console.log('Connection :: close');
-				});
-				c.connect({
-					host: data.host,
-					port: data.port || 22,
-					username: data.user || 'root',
-					privateKey: require('fs').readFileSync('/root/.ssh/astra_rsa')
-				});
-			}
-		},
-
 		/**
 		* Overrides for the settings in `config/controllers.js`
 		* (specific to CommandController)
@@ -91,14 +47,4 @@ module.exports = ( function() {
 
 	};
 
-	function extend(target) {
-	    var sources = [].slice.call(arguments, 1);
-	    sources.forEach(function (source) {
-	        for (var prop in source) {
-	            target[prop] = source[prop];
-	        }
-	    });
-	    return target;
-	}
-  
 } )();

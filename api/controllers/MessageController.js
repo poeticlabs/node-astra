@@ -136,13 +136,18 @@ module.exports = ( function() {
 
 					data.response = data.message;
 
+					if ( data.type == 'presence' ) {
+						data.irc_color = 'grey';
+						data.xmpp_color = 'grey';
+						data.type = 'groupchat';
+					}
+
 					if ( data.proto == 'irc' ) {
 						data.proto = 'xmpp';
 						data.target = data.target.replace( '#', '');
 						data.target = data.target + sails.config.xmpp.chat_domain;
 
 						data.response = sails.config.irc.crossover_prefix + data.author + sails.config.irc.message_delimiter + data.message
-
 						console.log( "XO:".verbose, data.proto.warn, data.target, "=>", data.target );
 
 					} else if ( data.proto == 'xmpp' ) {
@@ -153,9 +158,7 @@ module.exports = ( function() {
 						data.target = '#' + data.target;
 
 						data.response = sails.config.xmpp.crossover_prefix + data.author + sails.config.xmpp.message_delimiter + data.message
-
 						console.log( "XO:".verbose, data.proto, data.author, "=>", data.target );
-
 					}
 
 					if ( data.target ) {

@@ -1,7 +1,7 @@
 // Joke.js
 var Joke = {
 	attributes: {
-		data: 'STRING',
+		data: 'TEXT',
 	}
 };
 

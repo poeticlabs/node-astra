@@ -45,3 +45,4 @@ nbproject
 *.bak
 config/local.js
 config/local-dev.js
+strongloop.json

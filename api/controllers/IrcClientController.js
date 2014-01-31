@@ -23,15 +23,15 @@ module.exports = {
 	*/
 	send: function ( data ) {
 		var c = require('irc-colors');
-		this.color = ( data.irc_color ) ? data.irc_color : sails.config.irc.color;
+		data.color = ( data.irc_color != undefined ) ? data.irc_color : sails.config.irc.color;
 		if ( data.response != null || data.response != undefined ) {
 			if ( typeof data.response === 'string' ) {
 				var responses = data.response.split('\n');
 				for ( var i = 0; i < responses.length; i++ ) {
-					sails.config.bootstrap.irc_client.say ( data.target, c[this.color]( responses[i] ) );
+					sails.config.bootstrap.irc_client.say ( data.target, c[data.color]( responses[i] ) );
 				}
 			} else if ( typeof data.response === 'object' ) {
-				sails.config.bootstrap.irc_client.say ( data.target, c[this.color]( data.response ) );
+				sails.config.bootstrap.irc_client.say ( data.target, c[data.color]( data.response ) );
 			}
 		}
 

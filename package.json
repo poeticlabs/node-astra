@@ -1,9 +1,8 @@
 {
   "name": "Astra",
   "private": true,
-  "version": "2.0.0-alpha",
+  "version": "2.0.0-beta.RC1",
   "description": "An IRC/XMPP crossover-communications robot, and companion.",
-
   "dependencies": {
     "sails": "0.9.8",
     "grunt": "0.4.1",
@@ -16,20 +15,18 @@
     "irc-colors": "~1.0.3",
     "node-xmpp": "0.12.0",
     "pm2": "~0.7.1",
-	"ssh2": "~0.2.17"
+    "ssh2": "~0.2.17",
+    "strong-agent": "~0.2.20"
   },
-
   "scripts": {
     "start": "node app.js",
     "debug": "node debug app.js"
   },
-
   "main": "app.js",
   "repository": "",
   "author": "Chris Hart",
   "license": "LICENSE.md",
   "readmeFilename": "README.md",
-
   "devDependencies": {},
   "engines": {
     "node": "v0.8.x"

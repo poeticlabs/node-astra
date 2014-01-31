@@ -34,20 +34,20 @@ module.exports = {
    *    `/xmppclient/send`
    */
 	send: function ( data ) {
-		this.color = ( data.xmpp_color ) ? data.xmpp_color : sails.config.xmpp.color;
+		data.color = ( data.xmpp_color != undefined ) ? data.xmpp_color : sails.config.xmpp.color;
 		if ( data.response != null || data.response != undefined ) {
 			if ( typeof data.response === 'string' ) {
 				var responses = data.response.split('\n');
 				for ( var i = 0; i < responses.length; i++ ) {
 					sails.config.bootstrap.xmpp_client.send(new sails.config.bootstrap.xmpp_obj.Element('message', { to: data.target, type: data.type })
 						.c('body').t( responses[i] ).up()
-						.c('html', { xmlns: 'http://jabber.org/protocol/xhtml-im' } ).c('body').c('span', { style: 'color:' + this.color }).t( responses[i] )
+						.c('html', { xmlns: 'http://jabber.org/protocol/xhtml-im' } ).c('body').c('span', { style: 'color:' + data.color }).t( responses[i] )
 					);
 				}
 			} else if ( typeof data.response === 'object' ) {
 				sails.config.bootstrap.xmpp_client.send(new sails.config.bootstrap.xmpp_obj.Element('message', { to: data.target, type: data.type })
 					.c('body').t( data.response ).up()
-					.c('html', { xmlns: 'http://jabber.org/protocol/xhtml-im' } ).c('body').c('span', { style: 'color:' + this.color }).t( data.response )
+					.c('html', { xmlns: 'http://jabber.org/protocol/xhtml-im' } ).c('body').c('span', { style: 'color:' + data.color }).t( data.response )
 				);
 			}
 		}
