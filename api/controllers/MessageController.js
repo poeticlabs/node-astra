@@ -15,9 +15,8 @@
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
 
-module.exports = ( function() {
+module.exports = {
 
-	return {
 		/**
 		* Action blueprints:
 		*    `/message/process`
@@ -27,44 +26,53 @@ module.exports = ( function() {
 			var data_obj = require(sails.config.libpath + '/data_object_config');
 			var data = extend( {}, data_obj, params );
 
-			// Ignore Self
-			if ( data.author.match( new RegExp( sails.config.xmpp.local_alias + "|" + sails.config.irc.username, 'i') ) ) {
-				next();
-			}
-
 			// If you are who you say you are...
-			Identity.findOne( {
-				where: {
-					or: [ {irc: data.author}, {xmpp: data.author}, {nick: data.author} ]
-				}
-			}, function ( err, user ) {
+			async.waterfall( [
 
-				if ( user ) {
-					if ( user.level == null ) {
-						user.level = 0;
-					};
-					data.identified = true;
-					data.identity = user;
-				}
+				function(callback) {
 
-				if ( data.identified == true ) {
-					for ( var i = 0; i < sails.config.ranks.length; i++ ) {
-						var rank = sails.config.ranks[i];
-						if ( data.identity.level <= rank.max_level && data.identity.level >= rank.min_level ) {
-							data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
-							data.identity.rank = i;
-							data.identity.rankname = rank.name;
-						} else if ( data.identity.level > rank.max_level ) {
-							data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
-							data.identity.rank = i;
-							data.identity.rankname = rank.name;
+					Identity.findOne( {
+
+						where: {
+							or: [ {irc: data.author}, {xmpp: data.author}, {nick: data.author} ]
 						}
-					}
-				} else {
-					data.allowed_cmds = data.allowed_cmds.concat( sails.config.ranks[0].allowed_cmds );
-					data.identity.rank = 0;
-					data.identity.rankname = sails.config.ranks[0].name;
+
+					}, function(err, user) {
+
+						if ( user ) {
+							if ( user.level == null ) {
+								user.level = 0;
+							};
+							data.identified = true;
+							data.identity = user;
+						}
+
+						if ( data.identified == true ) {
+							for ( var i = 0; i < sails.config.ranks.length; i++ ) {
+								var rank = sails.config.ranks[i];
+								if ( data.identity.level <= rank.max_level && data.identity.level >= rank.min_level ) {
+									data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
+									data.identity.rank = i;
+									data.identity.rankname = rank.name;
+								} else if ( data.identity.level > rank.max_level ) {
+									data.allowed_cmds = data.allowed_cmds.concat( rank.allowed_cmds );
+									data.identity.rank = i;
+									data.identity.rankname = rank.name;
+								}
+							}
+
+						} else {
+							data.allowed_cmds = data.allowed_cmds.concat( sails.config.ranks[0].allowed_cmds );
+							data.identity.rank = 0;
+							data.identity.rankname = sails.config.ranks[0].name;
+						}
+
+						callback( null, data );
+
+					});
 				}
+
+			], function ( err, data ) {
 
 				// Process buddy junk right away and bail
 				// Buddies must be Ident and >= rank 1 (Staff)
@@ -78,8 +86,10 @@ module.exports = ( function() {
 				var cmd = data.message.match( cmd_syntax );
 
 				if ( cmd != null ) {
+
 					console.log( "Trying to run command: " + cmd[1] );
 					data.command = cmd[1];
+
 					if ( data.allowed_cmds.indexOf( data.command ) > -1
 						|| data.author == 'api'
 						|| data.command == 'ident' ) {
@@ -89,6 +99,22 @@ module.exports = ( function() {
 						data.response = "Sorry, " + data.author + ", you are not allowed to do that.";
 						data.irc_color = 'red';
 						data.xmpp_color = 'red';
+					}
+
+				} else {
+
+					// Process any open modes if cmd == null
+					if ( ! data.message.match( /^\%/ ) ) {
+						Mode.findOne( {
+							ident: data.identity.id
+						}, function ( err, mode ) {
+							if ( mode ) {
+								mode.data += '\n' + data.message;
+								mode.save( function(err) {
+									return; // Do not XO !mode append/concat
+								});
+							}
+						});
 					}
 				}
 
@@ -167,7 +193,7 @@ module.exports = ( function() {
 
 				}
 
-			}); // Identity.findOne().callback
+			}); // async.waterfall
 
 		},
 
@@ -176,31 +202,16 @@ module.exports = ( function() {
 		*    `/message/send`
 		*/
 		send: function ( data ) {
-
 			if ( data.proto == 'irc' ) {
 				// IRC
 				sails.controllers.ircclient.send ( data );
 
 			} else if ( data.proto == 'xmpp' ) {
-				// send response XMPP
+				// XMPP
 				sails.controllers.xmppclient.send ( data );
 			}
-
 			return;
-
 		},
-
-	};
-
-	function extend(target) {
-	    var sources = [].slice.call(arguments, 1);
-	    sources.forEach(function (source) {
-	        for (var prop in source) {
-	            target[prop] = source[prop];
-	        }
-	    });
-	    return target;
-	}
 
 	/**
 	* Overrides for the settings in `config/controllers.js`
@@ -208,4 +219,14 @@ module.exports = ( function() {
 	*/
 	_config: {}
 
-} )();
+};
+
+function extend(target) {
+    var sources = [].slice.call(arguments, 1);
+    sources.forEach(function (source) {
+        for (var prop in source) {
+            target[prop] = source[prop];
+        }
+    });
+    return target;
+}

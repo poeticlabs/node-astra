@@ -31,29 +31,6 @@ module.exports.bootstrap = function (cb) {
 	console.log("\n\n");
 	console.log ( "info".info + ":".data + " Starting Astra v.".silly + config.version.cyan );
 
-	var channels = {
-		irc: [],
-		xmpp: []
-	};
-
-	Channel.find().done( function(err, list) {
-		if ( err ) {
-			console.log( 'ERROR: No channels found, '.error, JSON.stringify( err ).error );
-		} else if ( list ) {
-			for ( var i = 0; i < list.length; i++ ) {
-				if ( list[i].hasOwnProperty('irc') ) {
-					channels.irc.push( list[i].irc );
-				}
-				if ( list[i].hasOwnProperty('xmpp') ) {
-					channels.xmpp.push( list[i].xmpp );
-				}
-			}
-		}
-
-		main();
-
-	});
-
 	//////////////////////////////////////////////////
 	//
 	// M * O * D * U * L * E * S
@@ -62,8 +39,8 @@ module.exports.bootstrap = function (cb) {
 
 	var mods = [];
 
-	mods['add_chan']	= require( config.cmdpath + '/add_chan' );
 	mods['aop']			= require( config.cmdpath + '/aop' );
+	mods['channel']		= require( config.cmdpath + '/channel' );
 	mods['cq']			= require( config.cmdpath + '/cq' );
 	mods['echo']		= require( config.cmdpath + '/echo' );
 	mods['eq']			= require( config.cmdpath + '/eq' );
@@ -72,19 +49,56 @@ module.exports.bootstrap = function (cb) {
 	mods['ident']		= require( config.cmdpath + '/ident' );
 	mods['join']		= require( config.cmdpath + '/join' );
 	mods['joke']		= require( config.cmdpath + '/joke' );
+	mods['leave']		= require( config.cmdpath + '/leave' );
 	mods['levelup']		= require( config.cmdpath + '/levelup' );
+	mods['mode']		= require( config.cmdpath + '/mode' );
 	mods['mq']			= require( config.cmdpath + '/mq' );
 	mods['promote']		= require( config.cmdpath + '/promote' );
+	mods['return']		= require( config.cmdpath + '/return' );
 	mods['reload']		= require( config.cmdpath + '/reload' );
 	mods['set']			= require( config.cmdpath + '/set' );
+	mods['team']		= require( config.cmdpath + '/team' );
+	mods['ticket']		= require( config.cmdpath + '/ticket' );
 	mods['version']		= require( config.cmdpath + '/version' );
-	mods['which_chan']	= require( config.cmdpath + '/which_chan' );
 
 	sails.controllers.command.mods = mods;
 
 	//////////////////////////////////////////////////
 
-	function main() {
+	var channels = {
+		irc: [],
+		xmpp: []
+	};
+
+	async.waterfall( [
+
+		function(callback) {
+			Channel.find().done( function(err,list) {
+				if ( ! list ) {
+					err = 'Sorry, ' + data.author + ', there is no channel called that.';
+				}
+				callback( err, list );
+			});
+		},
+		function(list, callback) {
+
+			for ( var i = 0; i < list.length; i++ ) {
+				if ( list[i].hasOwnProperty('irc') ) {
+					channels.irc.push( list[i].irc );
+				}
+				if ( list[i].hasOwnProperty('xmpp') ) {
+					channels.xmpp.push( list[i].xmpp );
+				}
+			}
+
+			callback( null, channels );
+		}
+
+	], function( err, channels ) {
+
+		if ( err ) {
+			console.log( err );
+		}
 
 		if ( config.irc.enabled == true ) {
 
@@ -237,8 +251,8 @@ module.exports.bootstrap = function (cb) {
 
 				data.proto = 'xmpp';
 
-				data.target = stanza.attrs.from.replace( new RegExp('/.+$', 'i'), '');
-				data.author = stanza.attrs.from.replace( new RegExp('^.+/', 'i'), '');
+				data.target = stanza.attrs.from.replace( /.+$/, '' );
+				data.author = stanza.attrs.from.replace( /^.+/, '' );
 
 				var body = stanza.getChild('body');
 
@@ -246,12 +260,12 @@ module.exports.bootstrap = function (cb) {
 
 					if ( stanza.attrs.type == 'subscribe' ) {
 						console.log( 'buddy_req'.debug, stanza.toString() );
-						data.author = data.from.replace( new RegExp('@.+', 'i'), '');
+						data.author = data.from.replace( /@.+/, '');
 					} else if ( stanza.attrs.type == 'unavailable' ) {
 						data.message = stanza.attrs.from.replace( config.xmpp.chat_domain, '' )
-						.replace( new RegExp( '.+/' ), '' ) + " leaves the channel.";
+						.replace( /.+\//, '' ) + " leaves the channel.";
 
-						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( new RegExp( '/.+' ), '' );
+						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( /\/.+/, '' );
 						data.type = 'presence';
 
 						console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
@@ -263,9 +277,9 @@ module.exports.bootstrap = function (cb) {
 							return;
 						}
 						data.message = stanza.attrs.from.replace( config.xmpp.chat_domain, '' )
-						.replace( new RegExp( '.+/' ), '' ) + " enters the channel.";
+						.replace( /.+\//, '' ) + " enters the channel.";
 
-						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( new RegExp( '/.+' ), '' );
+						data.author = stanza.attrs.from.replace( config.xmpp.chat_domain, '' ).replace( /\/.+/, '' );
 						data.type = 'presence';
 
 						console.log ( 'XMPP:'.verbose, data.type.info, data.author, "=>", data.target, "message:", JSON.stringify(data.message) );
@@ -293,7 +307,7 @@ module.exports.bootstrap = function (cb) {
 			module.exports.bootstrap.xmpp_client = cl;
 		}
 
-	} // Function main()
+	}); // async.waterfall
 
 	// Garbage Collect Sessions
 	(function gc () {

@@ -1,5 +1,11 @@
 # ChangeLog: node-astra
 
+## 2.0.0-beta.RC2
+* Added !leave, !mode, !return, !team, !ticket
+* Reworked !add_chan and !which_chan into !channel
+* Replaced callback-hell with async.waterfall
+* General code/repo cleanup
+
 ## 2.0.0-beta.RC1
 * Added !aop, !cq, !eq, !exit, !joke, !mq, !reload
 * Base API v1 to v2 passthrough

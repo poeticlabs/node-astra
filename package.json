@@ -1,7 +1,7 @@
 {
   "name": "Astra",
   "private": true,
-  "version": "2.0.0-beta.RC1",
+  "version": "2.0.0-beta.RC2",
   "description": "An IRC/XMPP crossover-communications robot, and companion.",
   "dependencies": {
     "sails": "0.9.8",
@@ -23,7 +23,7 @@
     "debug": "node debug app.js"
   },
   "main": "app.js",
-  "repository": "",
+  "repository": "https://github.com/autonomous-inc/node-astra",
   "author": "Chris Hart",
   "license": "LICENSE.md",
   "readmeFilename": "README.md",

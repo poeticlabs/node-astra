@@ -22,8 +22,17 @@ module.exports = ( function() {
 		exec: function( data ) {
 
 			if ( sails.controllers.command.mods[data.command] ) {
+
 				console.log ( "CMD:", data.command );
-				var args = data.message.split(/\s+/);
+				var args = [];
+
+				if ( data.message.match( /\n/ ) ) {
+					var lines = data.message.split(/\n/);
+					args = lines[0].split(/\s+/);
+				} else {
+					args = data.message.split(/\s+/);
+				}
+
 				args = args.slice(1)
 				// WARNING: Output CUTOFF
 				// You cannot reliably `return` data past this point due to async() !!
