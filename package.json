@@ -1,0 +1,34 @@
+{
+  "name": "Astra",
+  "private": true,
+  "version": "2.1.0",
+  "description": "A HipChat (XMPP) crossover-communications robot, and companion.",
+  "dependencies": {
+    "sails": "0.9.8",
+    "grunt": "0.4.1",
+    "sails-disk": "~0.9.0",
+    "sails-mysql": "~0.9.5",
+    "ejs": "0.8.4",
+    "optimist": "0.3.4",
+    "colors": "~0.6.2",
+    "irc": "0.3.6",
+    "irc-colors": "~1.0.3",
+    "node-xmpp": "0.12.0",
+    "pm2": "~0.7.1",
+    "ssh2": "~0.2.17",
+    "moment": "~2.5.1"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "debug": "node debug app.js"
+  },
+  "main": "app.js",
+  "repository": "https://github.com/autonomous-inc/node-astra",
+  "author": "Chris Hart",
+  "license": "LICENSE.md",
+  "readmeFilename": "README.md",
+  "devDependencies": {},
+  "engines": {
+    "node": "v0.8.x"
+  }
+}

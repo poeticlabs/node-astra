@@ -1,0 +1,81 @@
+// Main Config,
+// * Untracked LOCAL
+
+var pkg = require('../package');
+
+module.exports = {
+
+	// Package Env
+
+	version: pkg.version,
+	port: process.env.PORT || 9999,
+	environment: process.env.NODE_ENV || 'development',
+	libpath: __dirname + '/../lib',
+	cmdpath: __dirname + '/../lib/commands',
+
+	// Protocols
+
+	cmd_shcut: '!',
+
+	enable_crossover: true,
+	enable_crossover_channel_creation: true,
+
+	irc: {
+		enabled: true,
+		host: "irc.somehost.net",
+		username: "astra1",
+		crossover_prefix: "[IRC] ",
+		message_delimiter: " : ",
+		color: "violet"
+	},
+
+	xmpp: {
+		enabled: true,
+		local_alias: "astra",
+		username: "astra",
+		host: "somedomain.org",
+		chat_domain: "@conference.somedomain.org",
+		password: "password",
+		crossover_prefix: "[XMPP] ",
+		message_delimiter: " : ",
+		color: "purple"
+	},
+
+	ranks: [
+		{
+			name: 'Customer',
+			min_level: 0,
+			max_level: 0,
+			allowed_cmds: [ 'ident', 'help', 'version' ],
+		},
+		{
+			name: 'Staff',
+			min_level: 1,
+			max_level: 499,
+			allowed_cmds: [ 'echo', 'which_chan' ],
+		},
+		{
+			name: 'Admin',
+			min_level: 500,
+			max_level: 749,
+			allowed_cmds: [ 'add_chan', 'levelup' ],
+		},
+		{
+			name: 'SuperAdmin',
+			min_level: 750,
+			max_level: 999,
+			allowed_cmds: [ 'promote', 'set' ],
+		}
+	],
+
+	// Model Adapters
+
+	adapters: {
+		mysql: {
+			user: 'astra',
+			database: 'astra_data',
+			password: 'password',
+			//socketPath: '/var/lib/mysql/mysql.sock'
+		}
+	}
+};
