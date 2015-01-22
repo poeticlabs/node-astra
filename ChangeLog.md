@@ -1,5 +1,10 @@
 # ChangeLog: node-astra
 
+## 2.1.1 (01/22/2015)
+* Added !lunch
+* Added random affirmation response array
+* Updated local.js.example
+
 ## 2.1.0 Release
 * Converted XMPP to Hipchat
 * Added auto-out to !whosin

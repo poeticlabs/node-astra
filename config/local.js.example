@@ -15,7 +15,7 @@ module.exports = {
 
 	// Protocols
 
-	cmd_shcut: '!',
+	cmd_shcut: '[!?]',
 
 	enable_crossover: true,
 	enable_crossover_channel_creation: true,
@@ -40,6 +40,39 @@ module.exports = {
 		message_delimiter: " : ",
 		color: "purple"
 	},
+
+    support: {
+            host: 'SupportOhTwo'
+    },
+
+    affirm_array: [
+            "Ok, %AUTHOR%, ",
+            "Nice, %AUTHOR%, ",
+            "Sweet, %AUTHOR%, ",
+            "Alright, %AUTHOR%, ",
+            "Sounds good, %AUTHOR%, ",
+            "Cool, %AUTHOR%, ",
+            "Yep, %AUTHOR%, ",
+            "Right on, %AUTHOR%, ",
+            "Woot, %AUTHOR%, ",
+            "Yeah, %AUTHOR%, ",
+            "Lucky you, %AUTHOR%, ",
+    ],
+
+    noauth_array: [
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "Sorry, %AUTHOR%, you are not allowed to do that.",
+            "No matter how many times you try that, %AUTHOR%, it won't work.",
+    ],
+
+    // ACL
 
 	ranks: [
 		{

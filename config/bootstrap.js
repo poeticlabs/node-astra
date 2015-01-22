@@ -54,6 +54,7 @@ module.exports.bootstrap = function (cb) {
 	mods['joke']		= require( config.cmdpath + '/joke' );
 	mods['leave']		= require( config.cmdpath + '/leave' );
 	mods['levelup']		= require( config.cmdpath + '/levelup' );
+    mods['lunch']		= require( config.cmdpath + '/lunch' );
 	mods['mode']		= require( config.cmdpath + '/mode' );
 	mods['mq']			= require( config.cmdpath + '/mq' );
 	mods['out']			= require( config.cmdpath + '/out' );
