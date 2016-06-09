@@ -331,7 +331,6 @@ module.exports.bootstrap = function (cb) {
 					}
 
 					// sails.controllers.message.process ( data );
-
 				} else {
 
 					data.type = stanza.attrs.type;

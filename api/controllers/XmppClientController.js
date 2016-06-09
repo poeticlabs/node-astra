@@ -57,7 +57,6 @@ module.exports = {
 
 	subscribe: function ( data ) {
 		var identee = data.author + '@' + sails.config.xmpp.host;
-		//var identee = data.author;
 
 		if ( data.identified == true && data.identity.rank >= 1 ) {
 			sails.config.bootstrap.xmpp_client.send( new sails.config.bootstrap.xmpp_obj.Element('presence', { to: identee, type: 'subscribed' })

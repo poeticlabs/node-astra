@@ -1,5 +1,8 @@
 # ChangeLog: node-astra
 
+## 2.2.0 (06/09/2016)
+* Many fixes, commands, hipchat support, etc
+
 ## 2.1.1 (01/22/2015)
 * Added !lunch
 * Added random affirmation response array
