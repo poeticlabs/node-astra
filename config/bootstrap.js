@@ -40,11 +40,14 @@ module.exports.bootstrap = function (cb) {
 	var mods = [];
 
 	mods['aop']			= require( config.cmdpath + '/aop' );
+	mods['back']		= require( config.cmdpath + '/back' );
 	mods['channel']		= require( config.cmdpath + '/channel' );
 	mods['cq']			= require( config.cmdpath + '/cq' );
 	mods['echo']		= require( config.cmdpath + '/echo' );
 	mods['eq']			= require( config.cmdpath + '/eq' );
 	mods['exit']		= require( config.cmdpath + '/exit' );
+    mods['fastfood']	= require( config.cmdpath + '/fastfood' );
+	mods['flipcoin']	= require( config.cmdpath + '/flipcoin' );
 	mods['friday']		= require( config.cmdpath + '/friday' );
 	mods['help']		= require( config.cmdpath + '/help' );
 	mods['host']		= require( config.cmdpath + '/host' );
@@ -63,10 +66,12 @@ module.exports.bootstrap = function (cb) {
 	mods['retro_exec']	= require( config.cmdpath + '/retro_exec' );
 	mods['return']		= require( config.cmdpath + '/return' );
 	mods['reload']		= require( config.cmdpath + '/reload' );
+	mods['roll']		= require( config.cmdpath + '/roll' );
 	mods['set']			= require( config.cmdpath + '/set' );
 	mods['team']		= require( config.cmdpath + '/team' );
 	mods['ticket']		= require( config.cmdpath + '/ticket' );
 	mods['timecard']	= require( config.cmdpath + '/timecard' );
+	mods['uptime']		= require( config.cmdpath + '/uptime' );
 	mods['version']		= require( config.cmdpath + '/version' );
 	mods['whosin']		= require( config.cmdpath + '/whosin' );
 	mods['whosout']		= require( config.cmdpath + '/whosout' );
@@ -217,8 +222,19 @@ module.exports.bootstrap = function (cb) {
 			var room_nick = config.xmpp.local_alias
 			var cl = new xmpp.Client({
 				jid: jid,
-				password: config.xmpp.password
+				password: config.xmpp.password,
+				reconnect: true,
 			});
+
+			// Override the final xmpp client.end() event
+			cl.connection.socket._events.end[1] = function() {
+				cl.connection.stopParser();
+				if (typeof cl.connection.socket !== 'undefined') {
+					cl.connection.socket.end();
+				}
+				// Burn it all down! :)
+			    process.exit(1);
+			};
 
 			// Once connected, set available presence and join room
 			cl.on('online', function() {
@@ -242,8 +258,24 @@ module.exports.bootstrap = function (cb) {
 				//cl.connection.socket.setKeepAlive(true, 10000)
 			});
 
-			cl.on('stanza', function(stanza) {
+			// If we catch an offline/error event,
+			// exit so the satan (pm2) daemon will restart us
+			cl.on('disconnect', function() {
+				cl.end();
+			    process.exit(1);
+			});
 
+			cl.on('offline', function() {
+				cl.end();
+			    process.exit(1);
+			});
+
+			cl.on('error', function(e) {
+				console.log('error'.error, e.toString() );
+			    process.exit(1);
+			})
+
+			cl.on('stanza', function(stanza) {
 				// always log error stanzas
 				if (stanza.attrs.type == 'error') {
 					console.log('error'.error, stanza.toString() );
@@ -342,7 +374,7 @@ module.exports.bootstrap = function (cb) {
 			data.response = ' ';
 			data.proto = 'xmpp';
 			data.type = 'chat';
-			data.target = '140065_1014798'; // chrish
+			data.target = sails.config.xmpp_prefix + '1014798'; // chrish
 			data.author = config.xmpp.username + '@' + config.xmpp.host + '/bot';
 			sails.controllers.message.send( data );
 

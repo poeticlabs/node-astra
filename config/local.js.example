@@ -2,6 +2,8 @@
 // * Untracked LOCAL
 
 var pkg = require('../package');
+var xmpp_prefix = 'some_prefix_';
+var default_channel = 'main-channel';
 
 module.exports = {
 
@@ -16,6 +18,9 @@ module.exports = {
 	// Protocols
 
 	cmd_shcut: '[!?]',
+	xmpp_prefix: xmpp_prefix,
+	default_channel: default_channel,
+	client_response_ignore_channels: [ default_channel, 'coreinfra-int', 'zl-linux-tier3' ],
 
 	enable_crossover: true,
 	enable_crossover_channel_creation: true,
@@ -32,7 +37,7 @@ module.exports = {
 	xmpp: {
 		enabled: true,
 		local_alias: "astra",
-		username: "astra",
+		username: xmpp_prefix + "astra",
 		host: "somedomain.org",
 		chat_domain: "@conference.somedomain.org",
 		password: "password",

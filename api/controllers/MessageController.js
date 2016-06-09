@@ -15,6 +15,8 @@
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
 
+var moment = require('moment');
+
 module.exports = {
 
 		/**
@@ -94,11 +96,13 @@ module.exports = {
 				}
 
 				if ( data.type === 'chat' ) {
-					data.target = data.author;
+					if ( data.author != 'api' ) {
+						data.target = data.author;
+					}
 				}
 
 				// decide if this is a command or what
-				var cmd_syntax = new RegExp( '^' + sails.config.cmd_shcut + '([\?\s]*[a-z0-9\_\-]+)' );
+				var cmd_syntax = new RegExp( '^' + sails.config.cmd_shcut + '([\s]*[a-z0-9\_\-]+)' );
 				var cmd = data.message.match( cmd_syntax );
 
 				if ( cmd != null ) {
@@ -147,6 +151,8 @@ module.exports = {
 					}
 				}
 
+				// data.response set before this point.
+
 				// do normal response if required
 				if ( data.response != null ) {
 
@@ -161,7 +167,7 @@ module.exports = {
 						// XMPP portion
 						if ( sails.config.xmpp.enabled == true ) {
 							data.proto = 'xmpp';
-							data.target = '140065_' + data.target.replace('#','') + sails.config.xmpp.chat_domain;
+							data.target = sails.config.xmpp_prefix + data.target.replace('#','') + sails.config.xmpp.chat_domain;
 							sails.controllers.message.send( data );
 						}
 
@@ -171,11 +177,86 @@ module.exports = {
 					// Private Message
 					//if ( to.match( new RegExp( sails.config.xmpp.local_alias + "|" + sails.config.irc.username, 'i') ) ) {
 					if ( data.type === 'chat' ) {
-						data.target = data.author;
+						if ( data.author != 'api' ) {
+							data.target = data.author;
+						}
 					}
 
 					if ( sails.config.irc.enabled == true || sails.config.xmpp.enabled == true ) {
 						sails.controllers.message.send( data );
+					}
+				} else {
+					// Client Response Notification
+					var ignore_this = sails.config.client_response_ignore_channels.join('|');
+					ignore_this = '/' + ignore_this + '/';
+
+					if ( (
+							// Skip these People ...
+							data.author != 'Alias' &&
+							data.author != 'Auto Bot' &&
+							data.author != 'Backups' &&
+							data.author != 'GitLab' &&
+							data.author != 'Linky' &&
+							data.author != 'PagerDuty' &&
+							data.author != 'QOTD' &&
+
+							// ... and these Channels/Rooms
+							! data.target.match( ignore_this )
+
+						) && ( data.identity.rank == 0 || data.identified == false ) ) {
+
+						// a customer
+						if ( data.author == 'Relay' ) {
+							var user = data.message.split(':');
+							data.author = user[0];
+						}
+
+						ClientResponse.findOne( {
+							where: { channel: data.target }
+						}, function (err, chan) {
+							if ( err ) {
+								console.log( JSON.stringify(err).error );
+							} else if ( chan == undefined ) {
+								// create record
+								ClientResponse.create( { channel: data.target } ).done(function(err, chan) {
+									if ( err ) {
+										console.log( JSON.stringify(err).error );
+									}
+								});
+
+								// notify
+								data.target = data.target.replace(sails.config.xmpp_prefix,'');
+								data.response = "(failed) [CLIENT_RESPONSE] Activity in room " + data.target + " by Client " + data.author;
+								data.response += " at " + moment().format('h:mm:ss a');
+								data.target = sails.config.xmpp_prefix + sails.config.default_channel + sails.config.xmpp.chat_domain;
+								sails.controllers.message.send( data );
+							} else {
+								var a = moment().utc().local();
+								var b = moment.utc(chan.createdAt + 'Z').local();
+								var total_msecs = a.diff(b);
+
+								var n_timer = 5 * 60 * 1000; // 5m milliseconds
+
+								if ( total_msecs >= n_timer ) {
+									// notify
+									data.target = data.target.replace(sails.config.xmpp_prefix,'');
+									data.response = "(failed) [CLIENT_RESPONSE] Activity in room " + data.target + " by Client " + data.author;
+									data.response += " at " + moment().format('h:mm:ss a');
+									data.target = sails.config.xmpp_prefix + sails.config.default_channel + sails.config.xmpp.chat_domain;
+									sails.controllers.message.send( data );
+								}
+							}
+						} );
+
+					} else {
+						// delete record when employee speaks
+						ClientResponse.destroy( {
+							where: { channel: data.target }
+						}, function (err, chan) {
+							if ( err ) {
+								console.log( JSON.stringify(err).error );
+							}
+						});
 					}
 				}
 
@@ -236,9 +317,11 @@ module.exports = {
 			} else if ( data.proto == 'xmpp' ) {
 				// XMPP
 				if ( data.type == 'chat' ) {
-					data.target = data.target.replace( '@' + sails.config.xmpp.host, '' ) + '@' + sails.config.xmpp.host;
+					data.target = data.target.replace( '@' + sails.config.xmpp.host, '' ).replace( sails.config.xmpp.chat_domain, '' );
+					data.target += '@' + sails.config.xmpp.host;
 				} else {
-					data.target = data.target.replace( sails.config.xmpp.chat_domain, '' ) + sails.config.xmpp.chat_domain;
+					data.target = data.target.replace( sails.config.xmpp.chat_domain, '' ).replace( '@' + sails.config.xmpp.host, '' );
+					data.target += sails.config.xmpp.chat_domain;
 				}
 				sails.controllers.xmppclient.send ( data );
 			}

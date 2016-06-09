@@ -1,7 +1,7 @@
 {
   "name": "Astra",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A HipChat (XMPP) crossover-communications robot, and companion.",
   "dependencies": {
     "sails": "0.9.8",
